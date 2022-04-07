@@ -66,7 +66,7 @@ async function validKey(req, res, next) {
     }   
     const key = req.headers.authorization.split(" ")[1]
     const rows = await queryDB(`SELECT * FROM API_KEYS WHERE \`KEY\` = '${key}'`)
-    if (rows[0]) {
+    if (rows && rows[0]) {
         next();
     } else {
         res.status(403).json({error: true, message: "Invalid API key"})

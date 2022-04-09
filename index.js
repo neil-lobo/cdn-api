@@ -182,6 +182,30 @@ app.get("/delete/:id", (req,res) => {
     res.status(200).send();
 })
 
+async function isAdmin(req, res, next) {
+    if (req.cookies.token) {
+        try {
+            const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+            const rows = await queryDB(`SELECT * FROM ADMINS WHERE TWITCH_ID = '${decoded.sub}'`)
+            if (rows && rows[0]) {
+                next();
+                return;
+            } else {
+                res.status(403).json({error: true, message: "Forbidden!"})
+                return;
+            }
+        } catch (err) {
+            res.status(403).json({error: true, message: "Invalid token!"})
+            return;
+        }
+    }
+    res.status(401).json({error: true, message: "No token provided!"})
+}
+
+app.get("/admin", isAdmin, (req, res) => {
+    res.send("admin")
+})
+
 app.listen(process.env.PORT, () => {
     console.log(`Listening on port: ${process.env.PORT}`)
 })

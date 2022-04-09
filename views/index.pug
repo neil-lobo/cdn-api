@@ -1,0 +1,18 @@
+html
+    head
+        title test uploader
+    body
+        if user
+            p #{user.id}
+            p #{user.preferred_username}
+        
+        a(href="/login")
+            button LOGIN
+        br
+        a(href="/logout")
+            button LOGOUT
+        br
+        form(action="/upload" enctype="multipart/form-data" method="post" id="form")
+            input(type="file" name="file" id="file")
+            input(type="submit" name="submit" id="submit")
+            

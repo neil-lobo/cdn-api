@@ -4,6 +4,9 @@ const multer  = require('multer')
 const bodyParser = require('body-parser');
 const uuid = require("uuid");
 const mariadb = require('mariadb');
+const fetch = require("node-fetch");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const pool = mariadb.createPool({
     host: process.env.DB_HOST,
@@ -74,10 +77,78 @@ async function validKey(req, res, next) {
 }
 
 app.use(express.static("imgs"));
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }))
+app.set('view engine', 'pug')
+
+app.get("/auth/callback", async (req, res) => {
+    if (!req.query.code) {
+        res.redirect("/");
+        return;
+    }
+    const tokenRes = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&code=${req.query.code}&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fauth%2Fcallback`, { method: "POST" })
+    const tokenData = await tokenRes.json();
+    if (tokenRes.status != 200) {
+        console.log(`token response: ${tokenRes.status}`)
+        res.redirect("/");
+        return;
+    }
+    // console.log("token generated")
+
+    const userRes = await fetch("https://id.twitch.tv/oauth2/userinfo", {method: "GET", headers: {Authorization: `Bearer ${tokenData.access_token}`}})
+    if (tokenRes.status != 200) {
+        console.log(`user response: ${tokenRes.status}`)
+        res.redirect("/");
+        return;
+    }
+    // console.log("user data received")
+
+    const userData = await userRes.json();
+    const data = {
+        "sub": userData.sub,
+        "preferred_username": userData.preferred_username
+    }
+
+    jwt.sign(data, process.env.JWT_SECRET, (err, token) => {
+        if (err) {
+            res.redirect("/");
+            console.log("err")
+            return;
+        }
+        res.cookie("token", token, {httpOnly: true}).redirect("/");
+    })
+    
+})
+
+app.get("/login", (req, res) => {
+    res.redirect("https://id.twitch.tv/oauth2/authorize?client_id=uld7qo2qokzdtihwzqaeo41z6qgccj&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fauth%2Fcallback&response_type=code")
+})
+
+app.get("/logout", (req, res) => {
+    res.clearCookie("token").redirect("/");
+})
 
 app.get("/", (req, res) => {
-    res.sendFile("index.html", { root: __dirname })
+    let user = null;
+    if (req.cookies.token) {
+        try {
+            const decoded = jwt.decode(req.cookies.token);
+            if (decoded) {
+                user = {
+                    id: decoded.sub,
+                    preferred_username: decoded.preferred_username
+                }
+            }
+        } catch(err) {
+            user = null;
+        }
+    }
+
+    res.render("index", {
+        user: user
+    })
+    
+    // res.sendFile("index.html", { root: __dirname })
 })
 
 app.post("/upload", validKey, (req,res) => {

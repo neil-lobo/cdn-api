@@ -58,6 +58,14 @@ async function queryDB(query) {
     return rows;
 }
 
+async function multiQueryDB(queries) {
+    const res = [];
+    for(let query of queries) {
+        res.push(await queryDB(query));
+    }
+    return res;
+}
+
 async function validKey(req, res, next) {
     if (!req.headers.authorization) {
         res.status(401).json({error: true, message: "No Authorization header found!"});
@@ -201,25 +209,23 @@ async function isAdmin(req, res, next) {
 app.get("/admin", isAdmin, async (req, res) => {
     let errors = [];
     const size = await getFolderSize("./imgs");
-    let tableSizes = [];
-    const rowsRes = await queryDB(`
-    SELECT 
-        table_name AS \`Table\`, 
-        round(((data_length + index_length) / 1024 / 1024), 2) \`Size in MB\` 
-    FROM information_schema.TABLES 
-    WHERE table_schema = "IMG_UPLOADER"
-        AND table_name IN ("API_KEYS", "ADMINS");`)
-    if (rowsRes && rowsRes.length == 2) {
-        tableSizes.push(rowsRes[0])
-        tableSizes.push(rowsRes[1])
-    } else {
-        errors.push({message: "Error querying table sizes"})
-    }
-
+    const queries = [
+        `SELECT 
+            table_name AS \`Table\`, 
+            round(((data_length + index_length) / 1024 / 1024), 2) \`Size in MB\` 
+        FROM information_schema.TABLES 
+        WHERE table_schema = "IMG_UPLOADER"
+            AND table_name IN ("API_KEYS", "ADMINS");`,
+        "SELECT * FROM API_KEYS",
+        "SELECT * FROM ADMINS"
+    ]
+    const queryRes = await multiQueryDB(queries);
     res.status(200).json({
         errors,
         "img-folder-size": `${size} bytes`,
-        "table-sizes": tableSizes
+        "table-sizes": queryRes[0],
+        "api-keys": queryRes[1],
+        "admins": queryRes[2]
     })
 })
 

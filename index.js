@@ -16,12 +16,6 @@ const pool = mariadb.createPool({
     connectionLimit: 5
 })
 
-// pool.getConnection()
-// .then(async (conn) => {
-//     const rows = await conn.query("SELECT * FROM API_KEYS")
-//     console.log(rows[0])
-// })
-
 const app = express();
 const opts = {
     storage: multer.diskStorage({

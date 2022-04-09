@@ -1,4 +1,6 @@
 const MAP = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+const util = require("util");
+const getFolderSize = util.promisify(require("get-folder-size"));
 const express = require("express");
 const multer  = require('multer')
 const bodyParser = require('body-parser');
@@ -196,8 +198,12 @@ async function isAdmin(req, res, next) {
     res.status(401).json({error: true, message: "No token provided!"})
 }
 
-app.get("/admin", isAdmin, (req, res) => {
-    res.send("admin")
+app.get("/admin", isAdmin, async (req, res) => {
+    const size = await getFolderSize("./imgs");
+    console.log(size)
+    res.status(200).json({
+        "img-folder-size": `${size} bytes`
+    })
 })
 
 app.listen(process.env.PORT, () => {

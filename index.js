@@ -199,10 +199,27 @@ async function isAdmin(req, res, next) {
 }
 
 app.get("/admin", isAdmin, async (req, res) => {
+    let errors = [];
     const size = await getFolderSize("./imgs");
-    console.log(size)
+    let tableSizes = [];
+    const rowsRes = await queryDB(`
+    SELECT 
+        table_name AS \`Table\`, 
+        round(((data_length + index_length) / 1024 / 1024), 2) \`Size in MB\` 
+    FROM information_schema.TABLES 
+    WHERE table_schema = "IMG_UPLOADER"
+        AND table_name IN ("API_KEYS", "ADMINS");`)
+    if (rowsRes && rowsRes.length == 2) {
+        tableSizes.push(rowsRes[0])
+        tableSizes.push(rowsRes[1])
+    } else {
+        errors.push({message: "Error querying table sizes"})
+    }
+
     res.status(200).json({
-        "img-folder-size": `${size} bytes`
+        errors,
+        "img-folder-size": `${size} bytes`,
+        "table-sizes": tableSizes
     })
 })
 

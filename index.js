@@ -76,7 +76,7 @@ app.get("/auth/callback", async (req, res) => {
         res.redirect("/");
         return;
     }
-    const tokenRes = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&code=${req.query.code}&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fauth%2Fcallback`, { method: "POST" })
+    const tokenRes = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&code=${req.query.code}&grant_type=authorization_code&redirect_uri=${process.env.REDIRECT_URI}`, { method: "POST" })
     const tokenData = await tokenRes.json();
     if (tokenRes.status != 200) {
         console.log(`token response: ${tokenRes.status}`)

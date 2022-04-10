@@ -111,7 +111,7 @@ app.get("/auth/callback", async (req, res) => {
 })
 
 app.get("/login", (req, res) => {
-    res.redirect(`https://id.twitch.tv/oauth2/authorize?client_id=uld7qo2qokzdtihwzqaeo41z6qgccj&redirect_uri=${process.env.REDIRECT_URI}&response_type=code`)
+    res.redirect(`https://id.twitch.tv/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${process.env.REDIRECT_URI}&response_type=code`)
 })
 
 app.get("/logout", (req, res) => {

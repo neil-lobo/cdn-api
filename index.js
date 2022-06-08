@@ -67,6 +67,7 @@ async function multiQueryDB(queries) {
 }
 
 app.use(express.static("imgs"));
+app.use("/static", express.static("static"));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }))
 app.set('view engine', 'pug')

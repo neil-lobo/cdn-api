@@ -8,6 +8,8 @@ const uuid = require("uuid");
 const mariadb = require('mariadb');
 const fetch = require("node-fetch");
 const jwt = require("jsonwebtoken");
+const favicon = require("serve-favicon");
+const path = require("path");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const pool = mariadb.createPool({
@@ -68,6 +70,7 @@ async function multiQueryDB(queries) {
 
 app.use(express.static("imgs"));
 app.use("/static", express.static("static"));
+app.use(favicon(path.join(__dirname, "static", "favicon.ico")));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }))
 app.set('view engine', 'pug')
